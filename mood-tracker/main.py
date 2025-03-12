@@ -119,6 +119,8 @@
 #     st.write(" Build with ❤️ by Shabnam Wahid")
 
 
+
+
 import streamlit as st  # Web interface
 import pandas as pd  # Data manipulation
 import datetime  # Date handling
@@ -128,55 +130,7 @@ import os  # File operations
 # ✅ Mood log CSV file
 MOOD_FILE = "mood_log.csv"
 
-# ✅ CSS for better styling
-st.markdown(
-    """
-    <style>
-        .stApp {
-            background: linear-gradient(to right, #FFDEE9, #B5FFFC);
-            font-family: 'Arial', sans-serif;
-        }
-        .stApp h1 {
-            color: #4A4A4A;
-            text-align: center;
-            font-size: 36px;
-            font-weight: bold;
-        }
-        .stApp h2 {
-            color: #333333;
-            text-align: center;
-            font-size: 24px;
-        }
-        .stButton button {
-            background: linear-gradient(to right, #FF758C, #FF7EB3);
-            color: white;
-            border-radius: 12px;
-            font-size: 18px;
-            padding: 10px 20px;
-        }
-        .stButton button:hover {
-            background: linear-gradient(to right, #D84A6F, #FF758C);
-        }
-        .stAlert {
-            background-color: #D4EDDA;
-            color: #155724;
-            border-left: 5px solid #28A745;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .stApp p {
-            text-align: center;
-            font-size: 16px;
-            color: #4A4A4A;
-            font-weight: bold;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# ✅ Function to load mood data
+# ✅ Function to load mood data safely
 def load_mood_data():
     if not os.path.exists(MOOD_FILE):  
         return pd.DataFrame(columns=["Date", "Mood"])  # Empty DataFrame if file doesn't exist
@@ -184,8 +138,13 @@ def load_mood_data():
     try:
         df = pd.read_csv(MOOD_FILE, encoding="utf-8", on_bad_lines="skip")  # ✅ Ignore bad lines
         df = df.drop_duplicates()  # ✅ Remove duplicate entries
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")  # ✅ Convert Date column to datetime
-        df = df.dropna()  # ✅ Remove rows with invalid dates
+
+        # ✅ Convert Date column to datetime format safely
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        
+        # ✅ Remove invalid dates
+        df = df.dropna(subset=["Date"])
+
         return df
     except Exception as e:
         st.error(f"⚠ Error loading mood data: {e}")
@@ -195,7 +154,9 @@ def load_mood_data():
 def save_mood_data(date, mood):
     with open(MOOD_FILE, "a", newline="", encoding="utf-8") as file:  
         writer = csv.writer(file)
-        writer.writerow([date, mood])  
+
+        # ✅ Ensure the correct format before saving
+        writer.writerow([date.strftime("%Y-%m-%d"), mood])  
 
 # ✅ Title
 st.title("😀 Mood Tracker")
@@ -214,10 +175,14 @@ if st.button("Log Mood"):
 
 # ✅ Load and display mood trends
 data = load_mood_data()
+
 if not data.empty:
     st.subheader("📊 Mood Trends Over Time")
+    
+    # ✅ Display a bar chart if data is available
     mood_counts = data["Mood"].value_counts()
     st.bar_chart(mood_counts)
 
 st.write("✨ Built with ❤️ by Shabnam Wahid")
- 
+
+
