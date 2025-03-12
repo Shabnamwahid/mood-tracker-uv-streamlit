@@ -127,23 +127,98 @@ import datetime  # Date handling
 import csv  # CSV read/write
 import os  # File operations
 
+
+
+st.markdown(
+    """
+    <style>
+        /* Gradient background */
+        .stApp {
+            background: linear-gradient(to right, #FFDEE9, #B5FFFC);
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* Title styling */
+        .stApp h1 {
+            color: #4A4A4A;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            padding: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Subheader styling */
+        .stApp h2 {
+            color: #333333;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        /* Select box styling */
+        .stSelectbox {
+            border: 2px solid #FF758C;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: white;
+            font-size: 18px;
+        }
+
+        /* Button styling */
+        .stButton button {
+            background: linear-gradient(to right, #FF758C, #FF7EB3);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            padding: 10px 20px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .stButton button:hover {
+            background: linear-gradient(to right, #D84A6F, #FF758C);
+        }
+
+        /* Success message */
+        .stAlert {
+            background-color: #D4EDDA;
+            color: #155724;
+            border-left: 5px solid #28A745;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        /* Footer */
+        .stApp p {
+            text-align: center;
+            font-size: 16px;
+            color: #4A4A4A;
+            font-weight: bold;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 # ✅ Mood log CSV file
 MOOD_FILE = "mood_log.csv"
 
-# ✅ Function to load mood data safely
+# ✅ Function to load mood data
 def load_mood_data():
     if not os.path.exists(MOOD_FILE):  
         return pd.DataFrame(columns=["Date", "Mood"])  # Empty DataFrame if file doesn't exist
 
     try:
-        df = pd.read_csv(MOOD_FILE, encoding="utf-8", on_bad_lines="skip")  # ✅ Ignore bad lines
-        df = df.drop_duplicates()  # ✅ Remove duplicate entries
-
-        # ✅ Convert Date column to datetime format safely
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        df = pd.read_csv(MOOD_FILE, encoding="utf-8", on_bad_lines="skip")  
+        df = df.drop_duplicates()  
         
-        # ✅ Remove invalid dates
-        df = df.dropna(subset=["Date"])
+        # ✅ Ensure "Date" column exists before conversion
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")  
+            df = df.dropna(subset=["Date"])  # ✅ Remove invalid dates
 
         return df
     except Exception as e:
@@ -152,11 +227,16 @@ def load_mood_data():
 
 # ✅ Function to save mood data
 def save_mood_data(date, mood):
+    file_exists = os.path.exists(MOOD_FILE)
+    
     with open(MOOD_FILE, "a", newline="", encoding="utf-8") as file:  
         writer = csv.writer(file)
 
-        # ✅ Ensure the correct format before saving
-        writer.writerow([date.strftime("%Y-%m-%d"), mood])  
+        # ✅ If file doesn't exist, add headers
+        if not file_exists:
+            writer.writerow(["Date", "Mood"])
+        
+        writer.writerow([date, mood])  
 
 # ✅ Title
 st.title("😀 Mood Tracker")
@@ -175,14 +255,9 @@ if st.button("Log Mood"):
 
 # ✅ Load and display mood trends
 data = load_mood_data()
-
 if not data.empty:
     st.subheader("📊 Mood Trends Over Time")
-    
-    # ✅ Display a bar chart if data is available
     mood_counts = data["Mood"].value_counts()
     st.bar_chart(mood_counts)
 
 st.write("✨ Built with ❤️ by Shabnam Wahid")
-
-
