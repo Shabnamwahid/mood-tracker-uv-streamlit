@@ -200,38 +200,31 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+
 # ✅ Mood log CSV file
 MOOD_FILE = "mood_log.csv"
 
 # ✅ Function to load mood data
 def load_mood_data():
     if not os.path.exists(MOOD_FILE):  
-        return pd.DataFrame(columns=["Date", "Mood"])  # خالی DataFrame اگر فائل موجود نہ ہو
+        return pd.DataFrame(columns=["Date", "Mood"])  # Empty DataFrame if file doesn't exist
 
     try:
-        df = pd.read_csv(MOOD_FILE, encoding="utf-8", on_bad_lines="skip")  
-        df.columns = df.columns.str.strip()  # ✅ Remove extra spaces from column names
-        df.rename(columns={"mood": "Mood", "date": "Date"}, inplace=True)  # ✅ Fix column names
-
-        df = df.drop_duplicates()  
-        if "Date" in df.columns:  
-            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")  
-            df = df.dropna(subset=["Date"])  
-
+        df = pd.read_csv(MOOD_FILE, encoding="utf-8", on_bad_lines="skip")  # ✅ Ignore bad lines
+        df.columns = df.columns.str.strip()  # ✅ Remove any extra spaces from column names
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")  # ✅ Convert Date column to datetime
+        df = df.dropna()  # ✅ Remove rows with invalid dates
         return df
     except Exception as e:
         st.error(f"⚠ Error loading mood data: {e}")
-        return pd.DataFrame(columns=["Date", "Mood"])  
+        return pd.DataFrame(columns=["Date", "Mood"])  # Return empty DataFrame on error
 
 # ✅ Function to save mood data
 def save_mood_data(date, mood):
-    file_exists = os.path.exists(MOOD_FILE)
-    
     with open(MOOD_FILE, "a", newline="", encoding="utf-8") as file:  
         writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(["Date", "Mood"])  
-        writer.writerow([date.strftime("%Y-%m-%d"), mood])  
+        writer.writerow([date, mood])  
 
 # ✅ Title
 st.title("😀 Mood Tracker")
@@ -250,13 +243,9 @@ if st.button("Log Mood"):
 
 # ✅ Load and display mood trends
 data = load_mood_data()
-if "Mood" in data.columns and not data.empty:
+if not data.empty:
     st.subheader("📊 Mood Trends Over Time")
     mood_counts = data["Mood"].value_counts()
     st.bar_chart(mood_counts)
-else:
-    st.warning("No mood data found. Please log your mood first.")
 
 st.write("✨ Built with ❤️ by Shabnam Wahid")
-
-
